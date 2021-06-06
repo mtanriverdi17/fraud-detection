@@ -16,13 +16,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import streamlit as st
 
+st.title('Web Based Fraud Detection')
+
 mpl.rcParams['figure.figsize'] = (12, 10)
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 #file = tf.keras.utils
 raw_df = pd.read_csv(
     'https://storage.googleapis.com/download.tensorflow.org/data/creditcard.csv')
-raw_df.head()
+
+
+st.write(raw_df.head())
 
 
 neg, pos = np.bincount(raw_df['Class'])
@@ -118,8 +122,5 @@ loaded_model = keras.models.load_model('my_model')
 loaded_model.predict(train_features[0:1])
 
 
-def show_detection_page():
-    st.title("Credit Card Fraud Detection")
-
-    st.pyplot(positive_distribution)
-    st.pyplot(positive_distribution)
+st.pyplot(positive_distribution)
+st.pyplot(positive_distribution)
