@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import streamlit as st
+BATCH_SIZE = 2048
 
 st.title('Web Based Fraud Detection')
 
@@ -104,10 +105,10 @@ st.write('Test features shape:', test_features.shape)
 
 st.markdown("### Look at the data distribution")
 st.markdown('Next compare the distributions of the positive and negative examples over a few features. Good questions to ask yourself at this point are:')
-st.markdown("* Do these distributions make sense? ",
-            "* Yes. You've normalized the input and these are mostly concentrated in the `+/- 2` range.")
-st.markdown("* Can you see the difference between the distributions?",
-            "* Yes the positive examples contain a much higher rate of extreme values.")
+st.markdown("""* Do these distributions make sense? 
+            * Yes. You've normalized the input and these are mostly concentrated in the `+/- 2` range.""")
+st.markdown("""* Can you see the difference between the distributions?
+            * Yes the positive examples contain a much higher rate of extreme values.""")
 
 pos_df = pd.DataFrame(
     train_features[bool_train_labels], columns=train_df.columns)
@@ -129,3 +130,58 @@ loaded_model.predict(train_features[0:1])
 
 st.pyplot(positive_distribution)
 st.pyplot(positive_distribution)
+
+results = loaded_model.evaluate(
+    train_features, train_labels, batch_size=BATCH_SIZE, verbose=0)
+st.write('Loss: ', results[0])
+st.markdown("""
+The correct bias to set can be derived from:
+
+$$ p_0 = pos/(pos + neg) = 1/(1+e^{-b_0}) $$
+$$ b_0 = -log_e(1/p_0 - 1) $$
+$$ b_0 = log_e(pos/neg)$$ """)
+
+initial_bias = np.log([pos/neg])
+st.write('Initial Bias:', initial_bias)
+
+ib_model = keras.models.load_model('ib_model')
+ib_model.predict(train_features[0:10])
+
+st.markdown("""
+With this initialization the initial loss should be approximately:
+
+$$-p_0log(p_0)-(1-p_0)log(1-p_0) = 0.01317$$
+ """)
+
+ib_results = ib_model.evaluate(
+    train_features, train_labels, batch_size=BATCH_SIZE, verbose=0)
+st.write('Loss: ', ib_results[0])
+
+train_predictions_baseline = ib_model.predict(
+    train_features, batch_size=BATCH_SIZE)
+test_predictions_baseline = ib_model.predict(
+    test_features, batch_size=BATCH_SIZE)
+
+
+def plot_cm(labels, predictions, p=0.5):
+    cm = confusion_matrix(labels, predictions > p)
+    plt.figure(figsize=(5, 5))
+    heatmap = sns.heatmap(cm, annot=True, fmt="d")
+    plt.title('Confusion matrix @{:.2f}'.format(p))
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+
+    st.pyplot(heatmap)
+
+    st.write('Legitimate Transactions Detected (True Negatives): ', cm[0][0])
+    st.write(
+        'Legitimate Transactions Incorrectly Detected (False Positives): ', cm[0][1])
+    st.write('Fraudulent Transactions Missed (False Negatives): ', cm[1][0])
+    st.write('Fraudulent Transactions Detected (True Positives): ', cm[1][1])
+    st.write('Total Fraudulent Transactions: ', np.sum(cm[1]))
+
+
+baseline_results = ib_model.evaluate(test_features, test_labels,
+                                     batch_size=BATCH_SIZE, verbose=0)
+
+plot_cm(test_labels, test_predictions_baseline)
