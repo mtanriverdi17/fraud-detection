@@ -165,13 +165,14 @@ test_predictions_baseline = ib_model.predict(
 
 def plot_cm(labels, predictions, p=0.5):
     cm = confusion_matrix(labels, predictions > p)
+    fig, ax = plt.subplots()
     plt.figure(figsize=(5, 5))
-    heatmap = sns.heatmap(cm, annot=True, fmt="d")
+    sns.heatmap(cm, annot=True, fmt="d", ax=ax)
     plt.title('Confusion matrix @{:.2f}'.format(p))
     plt.ylabel('Actual label')
     plt.xlabel('Predicted label')
 
-    st.pyplot(heatmap)
+    st.write(fig)
 
     st.write('Legitimate Transactions Detected (True Negatives): ', cm[0][0])
     st.write(
@@ -185,3 +186,29 @@ baseline_results = ib_model.evaluate(test_features, test_labels,
                                      batch_size=BATCH_SIZE, verbose=0)
 
 plot_cm(test_labels, test_predictions_baseline)
+
+st.markdown("""
+### Plot the ROC
+
+Now plot the [ROC](https://developers.google.com/machine-learning/glossary#ROC). This plot is useful because it shows, at a glance, the range of performance the model can reach just by tuning the output threshold.
+ """)
+
+
+def plot_roc(name, labels, predictions, **kwargs):
+    fp, tp, _ = sklearn.metrics.roc_curve(labels, predictions)
+
+    plt.plot(100*fp, 100*tp, label=name, linewidth=2, **kwargs)
+    plt.xlabel('False positives [%]')
+    plt.ylabel('True positives [%]')
+    plt.xlim([-0.5, 20])
+    plt.ylim([80, 100.5])
+    plt.grid(True)
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    st.pyplot()
+
+
+plot_roc("Train Baseline", train_labels,
+         train_predictions_baseline, color=colors[0])
+plot_roc("Test Baseline", test_labels, test_predictions_baseline,
+         color=colors[0], linestyle='--')
