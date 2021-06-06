@@ -1,8 +1,7 @@
 tensorflow
-os
-tempfile
 matplotlib
 numpy
 pandas
 seaborn
 sklearn
+
