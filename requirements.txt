@@ -1,6 +1,5 @@
 tensorflow
-os
-tempfile
+streamlit
 matplotlib
 numpy
 pandas

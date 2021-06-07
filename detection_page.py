@@ -25,8 +25,6 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 #file = tf.keras.utils
 raw_df = pd.read_csv(
     'https://storage.googleapis.com/download.tensorflow.org/data/creditcard.csv')
-
-
 st.write('Below is the head of our dataset.', raw_df.head())
 
 
@@ -123,13 +121,12 @@ negative_distribution = sns.jointplot(neg_df['V5'], neg_df['V6'],
                                       kind='hex', xlim=(-5, 5), ylim=(-5, 5))
 fig = plt.suptitle("Negative distribution")
 
+st.pyplot(positive_distribution)
+st.pyplot(negative_distribution)
 
 loaded_model = keras.models.load_model('my_model')
-loaded_model.predict(train_features[0:1])
+loaded_model.predict(train_features[0:10])
 
-
-st.pyplot(positive_distribution)
-st.pyplot(positive_distribution)
 
 results = loaded_model.evaluate(
     train_features, train_labels, batch_size=BATCH_SIZE, verbose=0)
@@ -196,6 +193,7 @@ Now plot the [ROC](https://developers.google.com/machine-learning/glossary#ROC).
 
 def plot_roc(name, labels, predictions, **kwargs):
     fp, tp, _ = sklearn.metrics.roc_curve(labels, predictions)
+    fig, ax = plt.subplots()
 
     plt.plot(100*fp, 100*tp, label=name, linewidth=2, **kwargs)
     plt.xlabel('False positives [%]')
@@ -205,7 +203,7 @@ def plot_roc(name, labels, predictions, **kwargs):
     plt.grid(True)
     ax = plt.gca()
     ax.set_aspect('equal')
-    st.pyplot()
+    st.pyplot(fig)
 
 
 plot_roc("Train Baseline", train_labels,
